@@ -7,7 +7,7 @@ const requestLogger = async (req, res, next) => {
     // Wait for response to finish to get status code
     res.on('finish', async () => {
         const logData = {
-            service: 'costs-service',
+            service: 'admin-service',
             level: res.statusCode >= 400 ? 'error' : 'info',
             msg: `${req.method} ${req.originalUrl} - ${res.statusCode}`,
             method: req.method,
