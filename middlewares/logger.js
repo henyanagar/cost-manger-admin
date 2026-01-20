@@ -6,10 +6,20 @@ const pino = require('pino')();
 const requestLogger = async (req, res, next) => {
     // Wait for response to finish to get status code
     res.on('finish', async () => {
+        const path = req.originalUrl.toLowerCase();
+        let action = 'Unknown Action';
+
+        // Determine action description based on request
+        if (req.method === 'GET' && path.includes('/about')) {
+            action = 'Get Team Members';
+        } else {
+            action = `${req.method} ${req.originalUrl}`;
+        }
+
         const logData = {
             service: 'admin-service',
             level: res.statusCode >= 400 ? 'error' : 'info',
-            msg: `${req.method} ${req.originalUrl} - ${res.statusCode}`,
+            msg: `${action} - ${res.locals.errorId || res.statusCode}`,
             method: req.method,
             url: req.originalUrl,
             statusCode: res.statusCode,
@@ -21,9 +31,9 @@ const requestLogger = async (req, res, next) => {
 
         // Remote log to Logs API database
         try {
-            const logApiUrl = `${process.env.LOG_API_URL}/api/logs/add`;
+            const logApiUrl = process.env.LOG_API_URL;
             if (logApiUrl) {
-                await fetch(logApiUrl, {
+                await fetch(`${logApiUrl}/api/logs/add`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(logData)
